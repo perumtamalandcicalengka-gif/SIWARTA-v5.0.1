@@ -1,1 +1,90 @@
-<!doctype html><html><head><base target="_top"><meta charset="utf-8"><title>SIWARTA</title></head><body><main><h1>SIWARTA</h1><p>Sistem Informasi Warga dan Iuran Perumahan.</p><p>Antarmuka dasar sedang disiapkan.</p></main></body></html>
+<!doctype html><html><head><base target="_top"><meta charset="utf-8"><style>
+:root{--navy:#173b68;--blue:#2563eb;--bg:#f3f6fb;--ink:#182230;--muted:#64748b;--line:#e5eaf1}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(110deg,#102b4d,#2463a7);color:#fff;padding:19px 5%;display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:23px;font-weight:800;letter-spacing:1px}.sub{font-size:12px;opacity:.8;margin-top:4px}
+.wrap{max-width:1200px;margin:25px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 18px #19365b0a}
+.login{max-width:420px;margin:7vh auto}.hidden{display:none!important}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,select,button{font:inherit;border-radius:9px;padding:11px 12px;border:1px solid #d5deea}input,select{width:100%;background:#fff}
+button{background:var(--blue);color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#eaf1fb;color:var(--navy)}button.danger{background:#b42318}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:17px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:22px;margin-top:8px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.tabs button{background:#e8eef7;color:#284768}.tabs button.active{background:var(--navy);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:#526174;background:#f8fafc}.tablewrap{overflow:auto}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#edf2f7;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wait{background:#fef3c7;color:#92400e}.bad{background:#fee2e2;color:#991b1b}
+.notice{padding:12px;background:#eff6ff;color:#1e40af;border-radius:9px;font-size:13px;margin:12px 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#toast{position:fixed;bottom:20px;right:20px;background:#142b45;color:white;padding:12px 16px;border-radius:10px;display:none;max-width:90%}
+h2{font-size:19px;margin:0 0 14px}h3{font-size:16px;margin:0 0 10px}.smallbtn{padding:7px 9px;font-size:12px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}header{padding:15px}.wrap{margin:15px auto}.stat strong{font-size:19px}}
+</style></head><body>
+<header><div><div class="brand">SIWARTA</div><div class="sub">Sistem Informasi Warga dan Iuran Perumahan</div></div><div id="userArea" class="hidden"><span id="who"></span> <button class="secondary" onclick="logout()">Keluar</button></div></header>
+<main class="wrap">
+<section id="loginView" class="panel login"><h2>Masuk Aplikasi</h2><p class="muted">Gunakan ID pengguna atau blok/unit dan PIN.</p>
+<div class="field"><label>ID Pengguna / Blok Unit</label><input id="loginUser" placeholder="ADMIN atau A-01"></div>
+<div class="field"><label>PIN</label><input id="loginPin" type="password" placeholder="Masukkan PIN"></div><button style="width:100%" onclick="login()">Masuk</button>
+<p class="muted">Login awal pengurus: ADMIN / 123456. Segera ganti PIN setelah login pertama.</p></section>
+<section id="appView" class="hidden">
+<div class="row between" style="margin-bottom:15px"><div><h2 id="welcome">Dashboard</h2><div class="muted" id="periodLabel"></div></div><button class="secondary" onclick="refresh()">Muat ulang</button></div>
+<div id="stats" class="grid"></div><nav class="tabs" id="tabs"></nav>
+<section id="tab-dashboard" class="panel tab"><h2>Tagihan</h2><div class="tablewrap"><table><thead><tr><th>Periode</th><th>Unit</th><th>Tagihan</th><th>Dibayar</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="myBills"></tbody></table></div></section>
+<section id="tab-riwayat" class="panel tab hidden"><h2>Riwayat Pembayaran</h2><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Tagihan</th><th>Nominal</th><th>Metode</th><th>Status</th><th>Bukti</th></tr></thead><tbody id="history"></tbody></table></div></section>
+<section id="tab-warga" class="panel tab hidden"><div class="row between"><h2>Data Warga</h2><button onclick="toggle('residentForm')">+ Tambah Warga</button></div>
+<div id="residentForm" class="notice hidden"><div class="two">
+<div class="field"><label>Blok/Unit</label><input id="rUnit" placeholder="A-01"></div><div class="field"><label>Nama</label><input id="rName"></div>
+<div class="field"><label>WhatsApp</label><input id="rPhone"></div><div class="field"><label>Email</label><input id="rEmail"></div>
+<div class="field"><label>PIN minimal 6 digit</label><input id="rPin" type="password"></div><div class="field"><label>Status</label><select id="rStatus"><option>AKTIF</option><option>NONAKTIF</option></select></div></div>
+<div class="row"><button onclick="saveResident()">Simpan</button><button class="secondary" onclick="toggle('residentForm')">Tutup</button></div></div>
+<div class="tablewrap"><table><thead><tr><th>Unit</th><th>Nama</th><th>WhatsApp</th><th>Status</th></tr></thead><tbody id="residents"></tbody></table></div></section>
+<section id="tab-staf" class="panel tab hidden"><div class="row between"><h2>Akun Pengurus</h2><button onclick="toggle('staffForm')">+ Tambah Staf</button></div>
+<div id="staffForm" class="notice hidden"><div class="two"><div class="field"><label>Nama</label><input id="stName"></div><div class="field"><label>Role</label><select id="stRole"><option>KETUA</option><option>BENDAHARA</option><option>ADMIN</option></select></div><div class="field"><label>Email</label><input id="stEmail"></div><div class="field"><label>PIN minimal 6 digit</label><input id="stPin" type="password"></div></div><button onclick="saveStaff()">Buat Akun Staf</button></div>
+<div class="tablewrap"><table><thead><tr><th>ID Login</th><th>Nama</th><th>Role</th><th>Email</th><th>Status</th></tr></thead><tbody id="staff"></tbody></table></div></section>
+<section id="tab-verifikasi" class="panel tab hidden"><h2>Verifikasi Pembayaran</h2><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>User</th><th>Tagihan</th><th>Nominal</th><th>Metode</th><th>Bukti</th><th>Aksi</th></tr></thead><tbody id="pending"></tbody></table></div></section>
+<section id="tab-pengeluaran" class="panel tab hidden"><h2>Catat Pengeluaran</h2><div class="two"><div class="field"><label>Kategori</label><select id="eCategory"><option>Operasional</option><option>Keamanan</option><option>Kebersihan</option><option>Perawatan</option><option>Lainnya</option></select></div><div class="field"><label>Nominal (Rp)</label><input id="eAmount" type="number" min="1"></div></div><div class="field"><label>Keterangan</label><input id="eDesc"></div><button onclick="saveExpense()">Simpan Pengeluaran</button></section>
+<section id="tab-laporan" class="panel tab hidden"><div class="row between"><h2>Laporan Keuangan</h2><div class="row"><input id="reportPeriod" type="month"><button onclick="loadReport()">Tampilkan</button><button class="secondary" onclick="printReport()">Cetak</button></div></div><div id="reportSummary" class="notice">Pilih periode laporan.</div></section>
+<section id="tab-pengaturan" class="panel tab hidden"><h2>Pengaturan Aplikasi</h2><div class="two">
+<div class="field"><label>Nama Perumahan</label><input id="sName"></div><div class="field"><label>Kapasitas Unit</label><input id="sUnits" type="number"></div>
+<div class="field"><label>Iuran Bulanan (Rp)</label><input id="sAmount" type="number"></div><div class="field"><label>Tanggal Jatuh Tempo</label><input id="sDue" type="number" min="1" max="28"></div>
+<div class="field"><label>Nama Bank</label><input id="sBank"></div><div class="field"><label>Nomor Rekening</label><input id="sAccount"></div><div class="field"><label>Atas Nama</label><input id="sAccountName"></div></div>
+<div class="row"><button onclick="saveSettings()">Simpan Pengaturan</button><input id="billPeriod" type="month"><button class="secondary" onclick="createBills()">Buat Tagihan Bulanan</button></div>
+<hr style="border:0;border-top:1px solid #e5eaf1;margin:20px 0"><h3>Ganti PIN</h3><div class="two"><div class="field"><label>PIN Lama</label><input id="oldPin" type="password"></div><div class="field"><label>PIN Baru</label><input id="newPin" type="password"></div></div><button class="secondary" onclick="changePin()">Ganti PIN</button></section>
+</section></main><div id="toast"></div>
+<script>
+let TOKEN='',USER=null,DASH=null,REPORT=null;
+const $=id=>document.getElementById(id), money=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function call(n,...a){return new Promise((ok,no)=>google.script.run.withSuccessHandler(ok).withFailureHandler(e=>no(new Error(e.message||e)))[n](...a))}
+function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',3500)}
+function toggle(id){$(id).classList.toggle('hidden')}
+async function login(){try{let r=await call('apiLogin',$('loginUser').value,$('loginPin').value);TOKEN=r.token;USER=r.user;$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userArea').classList.remove('hidden');$('who').textContent=USER.name+' • '+USER.role;buildTabs();await refresh()}catch(e){toast(e.message)}}
+async function logout(){try{await call('apiLogout',TOKEN)}catch(e){}TOKEN='';USER=null;$('appView').classList.add('hidden');$('userArea').classList.add('hidden');$('loginView').classList.remove('hidden')}
+function buildTabs(){let r=USER.role,t=[['dashboard','Dashboard'],['riwayat','Riwayat']];
+if(['ADMIN','KETUA'].includes(r))t.push(['warga','Data Warga']);
+if(r==='ADMIN')t.push(['staf','Akun Pengurus']);
+if(['ADMIN','BENDAHARA'].includes(r))t.push(['verifikasi','Verifikasi'],['pengeluaran','Pengeluaran']);
+if(['ADMIN','KETUA','BENDAHARA'].includes(r))t.push(['laporan','Laporan']);
+if(r==='ADMIN')t.push(['pengaturan','Pengaturan']);
+$('tabs').innerHTML=t.map((x,i)=>`<button class="${i===0?'active':''}" onclick="showTab('${x[0]}',this)">${x[1]}</button>`).join('')}
+function showTab(n,b){document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));$('tab-'+n).classList.remove('hidden');document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(n==='warga')loadResidents();if(n==='staf')loadStaff();if(n==='verifikasi')loadPending();if(n==='riwayat')renderHistory()}
+function pill(s){let c=['LUNAS','DISETUJUI'].includes(s)?'ok':['MENUNGGU','CICILAN'].includes(s)?'wait':'bad';return `<span class="pill ${c}">${esc(s)}</span>`}
+async function refresh(){try{DASH=await call('apiGetDashboard',TOKEN);$('welcome').textContent='Halo, '+DASH.user.name;$('periodLabel').textContent=DASH.config.name+' • Iuran '+money(DASH.config.amount)+' / bulan • Jatuh tempo tanggal '+DASH.config.dueDay;
+let s=DASH.stats,c=USER.role==='WARGA'?[['Tagihan',money(s.bills)],['Pembayaran disetujui',money(s.collected)],['Sisa tagihan',money(s.outstanding)]]:[['Warga aktif',s.residents+' / '+s.unitCapacity],['Total tagihan',money(s.billed)],['Pembayaran diterima',money(s.collected)],['Menunggu verifikasi',money(s.pending)],['Tunggakan',money(s.outstanding)],['Pengeluaran',money(s.expenses)]];
+$('stats').style.gridTemplateColumns=`repeat(${Math.min(c.length,4)},1fr)`;$('stats').innerHTML=c.map(x=>`<div class="stat"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
+$('myBills').innerHTML=DASH.bills.map(b=>`<tr><td>${esc(b.Periode)}</td><td>${esc(b.BlokUnit)}</td><td>${money(b.Nominal)}</td><td>${money(b.Dibayar)}</td><td>${pill(b.Status)}</td><td>${Number(b.Dibayar)<Number(b.Nominal)?`<button class="smallbtn" onclick="pay('${esc(b.TagihanID)}',${Number(b.Nominal)-Number(b.Dibayar)})">Bayar</button>`:'-'}</td></tr>`).join('')||'<tr><td colspan="6">Belum ada tagihan.</td></tr>';
+$('sName').value=DASH.config.name;$('sUnits').value=DASH.config.units;$('sAmount').value=DASH.config.amount;$('sDue').value=DASH.config.dueDay;$('sBank').value=DASH.config.bank;$('sAccount').value=DASH.config.account;$('sAccountName').value=DASH.config.accountName;
+}catch(e){toast(e.message)}}
+async function pay(id,remaining){let amount=prompt('Nominal pembayaran (maksimal sisa '+money(remaining)+')',remaining);if(amount===null)return;let method=prompt('Metode TRANSFER atau TUNAI','TRANSFER');if(!method)return;try{let r=await call('apiSubmitPayment',TOKEN,{billId:id,amount:Number(amount),method:method.toUpperCase()});toast('Pembayaran dicatat: '+r.status);await refresh()}catch(e){toast(e.message)}}
+function renderHistory(){if(!DASH)return;$('history').innerHTML=DASH.payments.map(p=>`<tr><td>${esc(String(p.Tanggal).slice(0,10))}</td><td>${esc(p.TagihanID)}</td><td>${money(p.Nominal)}</td><td>${esc(p.Metode)}</td><td>${pill(p.Status)}</td><td>${p.BuktiURL?`<a target="_blank" href="${esc(p.BuktiURL)}">Lihat</a>`:'-'}</td></tr>`).join('')||'<tr><td colspan="6">Belum ada pembayaran.</td></tr>'}
+async function loadResidents(){try{let a=await call('apiListResidents',TOKEN);$('residents').innerHTML=a.map(x=>`<tr><td>${esc(x.unit)}</td><td>${esc(x.name)}</td><td>${esc(x.phone)}</td><td>${pill(x.status)}</td></tr>`).join('')}catch(e){toast(e.message)}}
+async function saveResident(){try{await call('apiSaveResident',TOKEN,{unit:$('rUnit').value,name:$('rName').value,phone:$('rPhone').value,email:$('rEmail').value,pin:$('rPin').value,status:$('rStatus').value});toast('Data warga disimpan');loadResidents();refresh()}catch(e){toast(e.message)}}
+async function loadStaff(){try{let a=await call('apiListStaff',TOKEN);$('staff').innerHTML=a.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.name)}</td><td>${esc(x.role)}</td><td>${esc(x.email)}</td><td>${pill(x.status)}</td></tr>`).join('')}catch(e){toast(e.message)}}
+async function saveStaff(){try{await call('apiSaveStaff',TOKEN,{name:$('stName').value,role:$('stRole').value,email:$('stEmail').value,pin:$('stPin').value});toast('Akun staf dibuat. ID login tampil pada tabel.');$('stName').value=$('stEmail').value=$('stPin').value='';toggle('staffForm');loadStaff()}catch(e){toast(e.message)}}
+async function loadPending(){try{let a=await call('apiGetPendingPayments',TOKEN);$('pending').innerHTML=a.map(p=>`<tr><td>${esc(String(p.Tanggal).slice(0,10))}</td><td>${esc(p.UserID)}</td><td>${esc(p.TagihanID)}</td><td>${money(p.Nominal)}</td><td>${esc(p.Metode)}</td><td>${p.BuktiURL?`<a target="_blank" href="${esc(p.BuktiURL)}">Lihat</a>`:'-'}</td><td><button class="smallbtn" onclick="verify('${esc(p.PembayaranID)}','APPROVE')">Setujui</button> <button class="smallbtn danger" onclick="verify('${esc(p.PembayaranID)}','REJECT')">Tolak</button></td></tr>`).join('')||'<tr><td colspan="7">Tidak ada pembayaran menunggu.</td></tr>'}catch(e){toast(e.message)}}
+async function verify(id,d){let note=prompt('Catatan (opsional)','')||'';try{await call('apiVerifyPayment',TOKEN,id,d,note);toast('Verifikasi diperbarui');loadPending();refresh()}catch(e){toast(e.message)}}
+async function saveExpense(){try{await call('apiSaveExpense',TOKEN,{category:$('eCategory').value,amount:$('eAmount').value,description:$('eDesc').value});toast('Pengeluaran tersimpan');$('eAmount').value=$('eDesc').value='';refresh()}catch(e){toast(e.message)}}
+async function saveSettings(){try{await call('apiSaveSettings',TOKEN,{NamaPerumahan:$('sName').value,JumlahUnit:$('sUnits').value,NominalIuran:$('sAmount').value,TanggalJatuhTempo:$('sDue').value,NamaBank:$('sBank').value,NomorRekening:$('sAccount').value,AtasNamaRekening:$('sAccountName').value});toast('Pengaturan disimpan');refresh()}catch(e){toast(e.message)}}
+async function createBills(){let p=$('billPeriod').value;if(!p){toast('Pilih periode tagihan');return}try{let r=await call('apiCreateMonthlyBills',TOKEN,p);toast(r.created+' tagihan dibuat untuk '+p+' • '+money(r.amount)+'/unit');refresh()}catch(e){toast(e.message)}}
+async function changePin(){try{await call('apiChangePin',TOKEN,$('oldPin').value,$('newPin').value);toast('PIN berhasil diganti');$('oldPin').value=$('newPin').value=''}catch(e){toast(e.message)}}
+async function loadReport(){try{REPORT=await call('apiGetReport',TOKEN,$('reportPeriod').value);$('reportSummary').innerHTML=`<b>${esc(REPORT.period)}</b><br>Total tagihan: ${money(REPORT.billed)}<br>Pembayaran diterima: ${money(REPORT.paid)}<br>Pengeluaran: ${money(REPORT.expenses)}<br>Tunggakan: ${money(REPORT.outstanding)}<br><b>Arus kas bersih periode: ${money(REPORT.paid-REPORT.expenses)}</b>`}catch(e){toast(e.message)}}
+function printReport(){if(!REPORT){toast('Tampilkan laporan terlebih dahulu');return}let w=window.open('','_blank');w.document.write(`<h1>Laporan Keuangan SIWARTA</h1><p>${esc(REPORT.period)}</p><p>Total tagihan: ${money(REPORT.billed)}</p><p>Pembayaran diterima: ${money(REPORT.paid)}</p><p>Pengeluaran: ${money(REPORT.expenses)}</p><p>Tunggakan: ${money(REPORT.outstanding)}</p><h3>Arus kas bersih: ${money(REPORT.paid-REPORT.expenses)}</h3>`);w.document.close();w.print()}
+$('loginPin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script></body></html>
