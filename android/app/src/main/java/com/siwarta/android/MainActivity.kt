@@ -22,11 +22,12 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var progress: ProgressBar
     private val prefs by lazy { getSharedPreferences("siwarta", MODE_PRIVATE) }
+    private val defaultWebAppUrl = "https://script.google.com/macros/s/AKfycbwiS8ImuVUeL01JKJlCKUyIQseV9y1hE66CvoajSKD8Pwg5BrSN5SHi_UQTPYcKqRxo/exec"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val savedUrl = prefs.getString("web_app_url", null)
-        if (savedUrl.isNullOrBlank()) showSetup() else showWebApp(savedUrl)
+        val savedUrl = prefs.getString("web_app_url", defaultWebAppUrl) ?: defaultWebAppUrl
+        showWebApp(savedUrl)
     }
 
     private fun showSetup() {
